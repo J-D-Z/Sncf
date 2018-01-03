@@ -62,9 +62,9 @@ def remplir(tableau_donnees,json_file,cols,champs,n_trains):
                     except:
                         pass
                 tab.loc[j,"numéro train"]=res["results"][n]["segments"][0]["trainNumber"]
-                print(" Réussi")
+#                print(" Réussi")
     except:
-        print(" Raté")
+#        print(" Raté")
         pass
     nrows=tableau_donnees.shape[0]
     t=tableau_donnees.loc[range(nrows-n_trains,nrows),["Date rech","numéro train"]].copy()
@@ -172,7 +172,7 @@ for traj in range(dim_trajets):
                         #Enfin, le numéro du train et la classe d'antériorité
                         tableau_result.loc[j,"numéro train"]=resultat3["results"][n]["segments"][0]["trainNumber"]
                         tableau_result.loc[j,"antériorité"]=str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"
-                        print(" Réussi")
+#                        print(" Réussi")
             except:
                 print(" Raté")
                 pass
