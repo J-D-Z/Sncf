@@ -17,6 +17,8 @@ import numpy as np
 import datetime
 from dateutil.relativedelta import relativedelta
 import os
+import time
+start_time = time.time()
 
 os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF')
 
@@ -38,7 +40,7 @@ def nettoyage(reponse):
     res=res.replace(';"','')
     return res
 
-def remplir(tableau_donnees,json_file,cols,champs,nb_trains):
+def remplir(tableau_donnees,json_file,cols,champs,n_trains):
     tab=pd.DataFrame([])
     tab["numéro train"]=0
     for i in range(len(cols)):
@@ -65,9 +67,9 @@ def remplir(tableau_donnees,json_file,cols,champs,nb_trains):
         print(" Raté")
         pass
     nrows=tableau_donnees.shape[0]
-    t=tableau_donnees.loc[range(nrows-vrai_nb_trains,nrows),["Date rech","numéro train"]].copy()
+    t=tableau_donnees.loc[range(nrows-n_trains,nrows),["Date rech","numéro train"]].copy()
     t=t.merge(tab,how="left",on="numéro train")
-    tableau_donnees.loc[:,cols+["numéro train"]]=t.loc[:,cols+["numéro train"]]
+    tableau_donnees.loc[range(nrows-n_trains,nrows),cols+["numéro train"]]=t.loc[:,cols+["numéro train"]].values
 
 
 headers = {
@@ -104,8 +106,9 @@ for anteriorite in list_ant:
 
 #Pour faire un petit test, mini-échantillon
 #trajets=pd.DataFrame([['Paris','Biarritz']])
-dates=['2018-01-16']
-horaires=['08:00:00']
+#trajets.columns=["Origine","Destination"]
+#dates=['2018-01-16']
+#horaires=['08:00:00','12:00:00']
 
 variables_utiles=["Départ rech","Arrivée rech","Date rech","Heure rech","Gare dép","Gare arriv","Date dép","Heure dép","Date arriv","Heure arriv","Type","Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1","numéro train","antériorité","Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1","Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune","Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"]
 tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
@@ -181,7 +184,7 @@ for traj in range(dim_trajets):
             resultat_1e=nettoyage(r_1e.text)
             #On remplit
             cols_1e=["Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1"]
-            remplir(tableau_result,resultat_1e,cols_1e,["NOFLEX","SEMIFLEX","FLEX"],nb_trains)
+            remplir(tableau_result,resultat_1e,cols_1e,["NOFLEX","SEMIFLEX","FLEX"],vrai_nb_trains)
 
 
             #Maintenant la troisième demande, carte jeune :
@@ -191,7 +194,7 @@ for traj in range(dim_trajets):
             resultat_jeune=nettoyage(r_jeune.text)
             #On remplit
             cols_jeune=["Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune"]
-            remplir(tableau_result,resultat_jeune,cols_jeune,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],nb_trains)
+            remplir(tableau_result,resultat_jeune,cols_jeune,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],vrai_nb_trains)
 
 
             #Maintenant la quatrième demande, carte sénior :
@@ -201,18 +204,16 @@ for traj in range(dim_trajets):
             resultat_senior=nettoyage(r_senior.text)
             #On remplit
             cols_senior=["Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"]
-            remplir(tableau_result,resultat_senior,cols_senior,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],nb_trains)
+            remplir(tableau_result,resultat_senior,cols_senior,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],vrai_nb_trains)
 
 
-
-#%%
 #On exporte en csv
 import datetime
 date = datetime.datetime.now()
 tableau_result.to_csv("SNCF_"+str(date.year)+str(date.month)+str(date.day)+"_"+"{:d}h{:02d}".format(date.hour, date.minute)+".csv")
 
-
+print("--- %s seconds ---" % (time.time() - start_time))
 #%%Pour copier quelque-chose dans le presse-papier
 
 import pyperclip
-pyperclip.copy(resultat_senior)
+pyperclip.copy(resultat)
