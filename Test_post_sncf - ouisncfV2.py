@@ -64,7 +64,6 @@ def remplir(tableau_donnees,json_file,cols,champs,nb_trains):
     nrows=tableau_donnees.shape[0]
     t=tableau_donnees.loc[range(nrows-vrai_nb_trains,nrows),["Date rech","numéro train"]].copy()
     t=t.merge(tab,how="left",on="numéro train")
-    print(t)
     tableau_donnees.loc[:,cols+["numéro train"]]=t.loc[:,cols+["numéro train"]]
 
 
@@ -105,17 +104,12 @@ villes_depart=['Paris']
 villes_arrivee=['Biarritz']
 dates=['2018-01-16']
 horaires=['08:00:00']
-#
-#
-#nb_obs=len(villes_depart)*len(villes_arrivee)*len(dates)*len(horaires)
-##On crée le tableau avec juste les noms des colonnes
-#tableau_result=pd.DataFrame(index=[],columns=["Départ rech","Arrivée rech","Date rech","Heure rech","Gare dép","Gare arriv","Date dép","Heure dép","Date arriv","Heure arriv","Type","Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1","numéro train","antériorité","Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1","Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune","Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"])
-#
 
-nb_obs=len(villes_depart)*len(villes_arrivee)*len(dates)*len(horaires)
-tableau_result=pd.DataFrame(np.zeros(shape=(nb_obs,28)))
+
+variables_utiles=["Départ rech","Arrivée rech","Date rech","Heure rech","Gare dép","Gare arriv","Date dép","Heure dép","Date arriv","Heure arriv","Type","Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1","numéro train","antériorité","Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1","Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune","Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"]
+tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
 #Noms des colonnes
-tableau_result.columns=["Départ rech","Arrivée rech","Date rech","Heure rech","Gare dép","Gare arriv","Date dép","Heure dép","Date arriv","Heure arriv","Type","Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1","numéro train","antériorité","Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1","Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune","Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"]
+tableau_result.columns=variables_utiles
 
 
 j=-1
@@ -145,8 +139,7 @@ for ville_depart in villes_depart:
                         if len(resultat3["results"][n]["priceProposals"])>0: #Critère pour vérifier qu'il s'agit bien d'un train - à remplacer éventuellement
                             j=j+1
                             vrai_nb_trains=vrai_nb_trains+1
-                            if j>-1:
-                                tableau_result.loc[j]=0
+                            tableau_result.loc[j]=0
                             #On inscrit dans le tableau les paramètres d'entrée
                             tableau_result.iloc[j,0:4]=[ville_depart,ville_arrivee,date,horaire]
 
