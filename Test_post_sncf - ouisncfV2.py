@@ -151,7 +151,6 @@ for traj in range(dim_trajets):
                         tableau_result.loc[j,"Heure dép"]=resultat3["results"][n]["departureDate"].split("T")[1]
                         tableau_result.loc[j,"Date arriv"]=resultat3["results"][n]["arrivalDate"].split("T")[0]
                         tableau_result.loc[j,"Heure arriv"]=resultat3["results"][n]["departureDate"].split("T")[1]
-
                         #Le type de transport :
                         tableau_result.loc[j,"Type"]=resultat3["results"][n]["segments"][0]["transporter"]
                         nb_correspondances=len(resultat3["results"][n]["segments"])
@@ -159,23 +158,14 @@ for traj in range(dim_trajets):
                         while i+1<nb_correspondances:
                             i=i+1
                             tableau_result.loc[j,"Type"]=tableau_result.loc[j,"Type"]+" puis "+resultat3["results"][n]["segments"][i]["transporter"]
-                        #Puis les prix !
-                        try:
-                            tableau_result.loc[j,"Prix noflex_classe2"]=resultat3["results"][n]["priceProposals"]["NOFLEX"]["amount"]
-                        except:
-                            pass
-                        try:
-                            tableau_result.loc[j,"Prix semiflex_classe2"]=resultat3["results"][n]["priceProposals"]["SEMIFLEX"]["amount"]
-                        except:
-                            pass
-                        try:
-                            tableau_result.loc[j,"Prix flex_classe2"]=resultat3["results"][n]["priceProposals"]["FLEX"]["amount"]
-                        except:
-                            pass
-                        try:
-                            tableau_result.loc[j,"Prop classe1"]=resultat3["results"][n]["priceProposals"]["UPSELL"]["amount"]
-                        except:
-                            pass
+                        #Puis les prix ! Différents prix recherchés
+                        cols_gen=["Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1"]
+                        tarifs=["NOFLEX","SEMIFLEX","FLEX","UPSELL"]
+                        for a in range(4):
+                            try:
+                                tableau_result.loc[j,cols_gen[a]]=resultat3["results"][n]["priceProposals"][tarifs[a]]["amount"]
+                            except:
+                                pass
                         #Enfin, le numéro du train et la classe d'antériorité
                         tableau_result.loc[j,"numéro train"]=resultat3["results"][n]["segments"][0]["trainNumber"]
                         tableau_result.loc[j,"antériorité"]=str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"
