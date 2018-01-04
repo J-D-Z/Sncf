@@ -106,6 +106,7 @@ for anteriorite in list_ant:
 
 #Pour faire un petit test, mini-échantillon
 #trajets=pd.DataFrame([['Paris','Biarritz']])
+#dim_trajets=trajets.shape[0]
 #trajets.columns=["Origine","Destination"]
 #dates=['2018-01-16']
 #horaires=['08:00:00','12:00:00']
