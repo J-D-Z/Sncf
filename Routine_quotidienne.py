@@ -21,19 +21,22 @@ import time
 from minio import Minio
 from minio.error import (ResponseError, BucketAlreadyOwnedByYou,
                          BucketAlreadyExists)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
 start_time = time.time()
 
 #os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF')
 
+#On indique le client minio
 minioClient = Minio('minio.web.innovation.insee.test',
                   access_key='minio',
                   secret_key='minio123',
                   secure=False)
-date_today = datetime.datetime.now()         
-output_directory="Output/SNCF_"+"{:d}-{:02d}-{:02d}-{:02d}h{:02d}".format(date_today.year, date_today.month, date_today.day, date_today.hour, date_today.minute)
+date_today = datetime.datetime.now()
 
-                  
+#Liste des fichiers exportés
+fichiers_crees=[]
+
+
 def calcul_anteriorite(date_rech,date2_python):
     annee=int(date_rech.split("-")[0])
     mois=int(date_rech.split("-")[1])
@@ -117,7 +120,7 @@ for anteriorite in list_ant:
   dates.append(jour_rech_format)
 
 #Pour faire un petit test, mini-échantillon
-#rajets=pd.DataFrame([['Paris','Biarritz']])
+#trajets=pd.DataFrame([['Paris','Biarritz']])
 #dim_trajets=trajets.shape[0]
 #trajets.columns=["Origine","Destination"]
 #dates=['2018-01-16']
@@ -223,12 +226,34 @@ for traj in range(dim_trajets):
 
 
         #On exporte en csv
-        nomFichier = "SNCF_"+ville_depart+" - "+ville_arrivee+"_"+str(date)+str()+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"".csv"
+        #nomFichier = output_directory+"/"+"SNCF_"+ville_depart+" - "+ville_arrivee+"_"+str(date)+str()+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"".csv"
+        nomFichier = "SNCF_"+str(date)+"_"+ville_depart+" - "+ville_arrivee+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours.csv"
         tableau_result.to_csv(nomFichier)
         try:
             minioClient.fput_object('nhnbyb', nomFichier, nomFichier)
         except ResponseError as err:
             print(err)
+        fichiers_crees.append(nomFichier)
+
+#Maintenant on importe tous les csv et on concatène (-> un fichier par date de trajet)
+for anteriorite in list_ant:
+    #On initialise une table
+    table_antfixee=pd.DataFrame()
+    for v in variables_utiles:
+        table_antfixee[v]=0
+    for nom in fichiers_crees:
+        if nom.split("_")[3]==str(anteriorite[1])+" jours.csv":
+            no=nom.split("_")
+            minioClient.fget_object('nhnbyb',nom,nom)
+            lecture_fichier=pd.read_csv(nom,sep=";",encoding="latin-1",)
+            table_antfixee=pd.concat([table_antfixee,lecture_fichier])
+    try:
+        nom_sortie="Collecte_"+no[1]+"_"+no[3]+".csv"
+        table_antfixee.to_csv(nom_sortie)
+        minioClient.fput_object('nhnbyb', nom_sortie, nom_sortie)
+    except ResponseError as err:
+        print("Pas de fichier de collecte créé")
+        pass
 
 
 print("--- %s seconds ---" % (time.time() - start_time))
