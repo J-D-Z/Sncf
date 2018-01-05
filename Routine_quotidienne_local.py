@@ -21,13 +21,16 @@ import time
 
 start_time = time.time()
 
+#path
 os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF/')
+
 #Créer notre dossier d'output
 date_today = datetime.datetime.now()
-directory="SNCF_"+str(date_today.year)+str(date_today.month)+str(date_today.day)
-if not os.path.exists(directory):
-    os.makedirs(directory)
-os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF/'+directory)
+output_directory="Output/SNCF_"+"{:d}-{:02d}-{:02d}-{:02d}h{:02d}".format(date_today.year, date_today.month, date_today.day, date_today.hour, date_today.minute)
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+fichiers_crees=[]
 
 def calcul_anteriorite(date_rech,date2_python):
     annee=int(date_rech.split("-")[0])
@@ -112,24 +115,24 @@ for anteriorite in list_ant:
   dates.append(jour_rech_format)
 
 #Pour faire un petit test, mini-échantillon
-#rajets=pd.DataFrame([['Paris','Biarritz']])
-#dim_trajets=trajets.shape[0]
-#trajets.columns=["Origine","Destination"]
+trajets=pd.DataFrame([['Paris','Biarritz']])
+dim_trajets=trajets.shape[0]
+trajets.columns=["Origine","Destination"]
 #dates=['2018-01-16']
 #horaires=['08:00:00','12:00:00']
 
 variables_utiles=["Départ rech","Arrivée rech","Date rech","Heure rech","Gare dép","Gare arriv","Date dép","Heure dép","Date arriv","Heure arriv","Type","Prix noflex_classe2","Prix semiflex_classe2","Prix flex_classe2","Prop classe1","numéro train","antériorité","Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1","Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune","Prix noflex_classe2_sénior","Prix semiflex_classe2_sénior","Prix flex_classe2_sénior","Prop classe1_sénior"]
 
-j=-1
+
 for traj in range(dim_trajets):
     ville_depart=trajets.loc[traj,"Origine"]
     ville_arrivee=trajets.loc[traj,"Destination"]
-    #On crée un nouveau tableau pour chaque trajet, qu'on exportera ensuite, et à la fin on concatènera le tout
-    tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
-    #Noms des colonnes
-    tableau_result.columns=variables_utiles
-
     for date in dates:
+        j=-1
+        #On crée un nouveau tableau pour chaque trajet*date, qu'on exportera ensuite, et à la fin on concatènera le tout
+        tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
+        #Noms des colonnes
+        tableau_result.columns=variables_utiles
         for horaire in horaires:
 
             #On concatène pour avoir notre json de demande
@@ -215,11 +218,27 @@ for traj in range(dim_trajets):
             remplir(tableau_result,resultat_senior,cols_senior,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],vrai_nb_trains)
 
 
-            #On exporte en csv
-            nomFichier = "SNCF_"+ville_depart+" - "+ville_arrivee+str(date)+str()+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"".csv"
-            tableau_result.to_csv(nomFichier)
+        #On exporte en csv
+        nomFichier = "SNCF_"+str(date)+"_"+ville_depart+" - "+ville_arrivee+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours.csv"
+        tableau_result.to_csv(output_directory+"/"+nomFichier)
+        fichiers_crees.append(nomFichier)
 
 
 #Maintenant on importe tous les csv et on concatène (-> un fichier par date de trajet)
+os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF/'+output_directory)
+for anteriorite in list_ant:
+    #On initialise une table
+    table_antfixee=pd.DataFrame()
+    for v in variables_utiles:
+        table_antfixee[v]=0
+    for nom in fichiers_crees:
+        if nom.split("_")[3]==str(anteriorite[1])+" jours.csv":
+            no=nom.split("_")
+            lecture_fichier=pd.read_csv(nom,sep=";",encoding="latin-1",)
+            table_antfixee=pd.concat([table_antfixee,lecture_fichier])
+    table_antfixee.to_csv("Collecte_"+no[1]+"_"+no[3]+".csv")
+
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
+
