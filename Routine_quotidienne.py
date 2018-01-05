@@ -26,6 +26,14 @@ start_time = time.time()
 
 #os.chdir('D:/NHNBYB/Mes Documents/Webscraping/Scraping SNCF')
 
+minioClient = Minio('minio.web.innovation.insee.test',
+                  access_key='minio',
+                  secret_key='minio123',
+                  secure=False)
+date_today = datetime.datetime.now()         
+output_directory="Output/SNCF_"+"{:d}-{:02d}-{:02d}-{:02d}h{:02d}".format(date_today.year, date_today.month, date_today.day, date_today.hour, date_today.minute)
+
+                  
 def calcul_anteriorite(date_rech,date2_python):
     annee=int(date_rech.split("-")[0])
     mois=int(date_rech.split("-")[1])
@@ -120,11 +128,15 @@ tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
 #Noms des colonnes
 tableau_result.columns=variables_utiles
 
-j=-1
 for traj in range(dim_trajets):
     ville_depart=trajets.loc[traj,"Origine"]
     ville_arrivee=trajets.loc[traj,"Destination"]
     for date in dates:
+        j=-1
+        #On crée un nouveau tableau pour chaque trajet*date, qu'on exportera ensuite, et à la fin on concatènera le tout
+        tableau_result=pd.DataFrame(np.zeros(shape=(1,len(variables_utiles))))
+        #Noms des colonnes
+        tableau_result.columns=variables_utiles
         for horaire in horaires:
 
             #On concatène pour avoir notre json de demande
@@ -191,7 +203,6 @@ for traj in range(dim_trajets):
             cols_1e=["Prix noflex_classe1","Prix semiflex_classe1","Prix flex_classe1"]
             remplir(tableau_result,resultat_1e,cols_1e,["NOFLEX","SEMIFLEX","FLEX"],vrai_nb_trains)
 
-
             #Maintenant la troisième demande, carte jeune :
             demande_jeune='{"origin":"'+ville_depart+'","originLocation":{"id":null,"label":null,"longitude":null,"latitude":null,"type":null,"country":null,"stationCode":null,"stationLabel":null},"destination":"'+ville_arrivee+'","destinationCode":null,"destinationLocation":null,"directTravel":false,"asymmetrical":false,"professional":false,"customerAccount":false,"oneWayTravel":true,"departureDate":"'+date+'T'+horaire+'","returnDate":null,"travelClass":"SECOND","country":"FR","language":"fr","busBestPriceOperator":null,"passengers":[{"travelerId":null,"profile":"YOUNG","age":22,"birthDate":null,"fidelityCardType":"NONE","fidelityCardNumber":null,"commercialCardNumber":null,"commercialCardType":"YOUNGS","promoCode":"","lastName":null,"firstName":null,"phoneNumer":null,"hanInformation":null}],"animals":[],"bike":"NONE","withRecliningSeat":false,"physicalSpace":null,"fares":[],"withBestPrices":false,"highlightedTravel":null,"nextOrPrevious":false,"source":"FORM_SUBMIT","targetPrice":null,"han":false,"outwardScheduleType":"BY_DEPARTURE_DATE","inwardScheduleType":"BY_DEPARTURE_DATE","$initial":true,"$queryId":"WDDI9"}'
             r_jeune = requests.post(url, data=demande_jeune,headers=headers)
@@ -200,7 +211,6 @@ for traj in range(dim_trajets):
             #On remplit
             cols_jeune=["Prix noflex_classe2_jeune","Prix semiflex_classe2_jeune","Prix flex_classe2_jeune","Prop classe1_jeune"]
             remplir(tableau_result,resultat_jeune,cols_jeune,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],vrai_nb_trains)
-
 
             #Maintenant la quatrième demande, carte sénior :
             demande_senior='{"origin":"'+ville_depart+'","originLocation":{"id":null,"label":null,"longitude":null,"latitude":null,"type":null,"country":null,"stationCode":null,"stationLabel":null},"destination":"'+ville_arrivee+'","destinationCode":null,"destinationLocation":null,"directTravel":false,"asymmetrical":false,"professional":false,"customerAccount":false,"oneWayTravel":true,"departureDate":"'+date+'T'+horaire+'","returnDate":null,"travelClass":"SECOND","country":"FR","language":"fr","busBestPriceOperator":null,"passengers":[{"travelerId":null,"profile":"SENIOR","age":66,"birthDate":null,"fidelityCardType":"NONE","fidelityCardNumber":null,"commercialCardNumber":null,"commercialCardType":"SENIOR","promoCode":"","lastName":null,"firstName":null,"phoneNumer":null,"hanInformation":null}],"animals":[],"bike":"NONE","withRecliningSeat":false,"physicalSpace":null,"fares":[],"withBestPrices":false,"highlightedTravel":null,"nextOrPrevious":false,"source":"FORM_SUBMIT","targetPrice":null,"han":false,"outwardScheduleType":"BY_DEPARTURE_DATE","inwardScheduleType":"BY_DEPARTURE_DATE","$initial":true,"$queryId":"WDDI9"}'
@@ -212,20 +222,15 @@ for traj in range(dim_trajets):
             remplir(tableau_result,resultat_senior,cols_senior,["NOFLEX","SEMIFLEX","FLEX","UPSELL"],vrai_nb_trains)
 
 
-#On exporte en csv
-import datetime
-date = datetime.datetime.now()
-nomFichier = "SNCF_"+str(date.year)+str(date.month)+str(date.day)+"_"+"{:d}h{:02d}".format(date.hour, date.minute)+".csv"
-tableau_result.to_csv(nomFichier)
+        #On exporte en csv
+        nomFichier = "SNCF_"+ville_depart+" - "+ville_arrivee+"_"+str(date)+str()+"_"+str(calcul_anteriorite(date,datetime.datetime.now()))+" jours"".csv"
+        tableau_result.to_csv(nomFichier)
+        try:
+            minioClient.fput_object('nhnbyb', nomFichier, nomFichier)
+        except ResponseError as err:
+            print(err)
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
-minioClient = Minio('minio.web.innovation.insee.test',
-                  access_key='minio',
-                  secret_key='minio123',
-                  secure=False)
 
-try:
-   minioClient.fput_object('nhnbyb', nomFichier, nomFichier)
-except ResponseError as err:
-   print(err)
