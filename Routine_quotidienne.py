@@ -91,7 +91,7 @@ def remplir(tableau_donnees,json_file,cols,champs,n_trains):
     tableau_donnees.loc[range(nrows-n_trains,nrows),cols+["numero train","Heure dep","Heure arriv"]]=t.loc[:,cols+["numero train","Heure dep","Heure arriv"]].values
 
 
-if __name__=='main':
+def collecte_cloud():
     headers = {
         'Host': 'www.oui.sncf',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:52.0) Gecko/20100101 Firefox/52.0',
@@ -272,4 +272,4 @@ if __name__=='main':
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
-
+collecte_cloud()
