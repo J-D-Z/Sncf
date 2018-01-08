@@ -38,41 +38,8 @@ def nettoyage(reponse):
     res=res.replace(';"','')
     return res
 
-def remplir(tableau_donnees,json_file,cols,champs,n_trains):
-    tab=pd.DataFrame([])
-    tab["numero train"]=0
-    tab["Heure dep"]=0
-    tab["Heure arriv"]=0
-    for i in range(len(cols)):
-        c=cols[i]
-        tab[c]=0
-    j=-1
-    try:
-        res=json.loads(json_file)
-        nb_tr=len(res["results"])
-        for n in range(nb_tr):
-            if len(res["results"][n]["priceProposals"])>0: #Critere pour verifier qu'il s'agit bien d'un train - à remplacer eventuellement
-                j=j+1
-                tab.loc[j]=0
-                for i in range(len(cols)):
-                    c=cols[i]
-                    cha=champs[i]
-                    try:
-                        tab.loc[j,c]=res["results"][n]["priceProposals"][cha]["amount"]
-                    except:
-                        pass
-                tab.loc[j,"numero train"]=res["results"][n]["segments"][0]["trainNumber"]
-                tab.loc[j,"Heure dep"]=res["results"][n]["departureDate"].split("T")[1]
-                tab.loc[j,"Heure arriv"]=res["results"][n]["arrivalDate"].split("T")[1]
-#                print(" Reussi")
-    except:
-#        print(" Rate")
-        pass
-    nrows=tableau_donnees.shape[0]
-    t=tableau_donnees.loc[range(nrows-n_trains,nrows),["Date rech","numero train","Heure dep","Heure arriv"]].copy()
-    t=t.merge(tab,how="left",on=["numero train","Heure dep","Heure arriv"])
-    tableau_donnees.loc[range(nrows-n_trains,nrows),cols+["numero train","Heure dep","Heure arriv"]]=t.loc[:,cols+["numero train","Heure dep","Heure arriv"]].values
-
+#Import de la fonction remplir
+from Routine_quotidienne import remplir
 
 def collecte():
     #path
