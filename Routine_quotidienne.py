@@ -58,6 +58,8 @@ def nettoyage(reponse):
 def remplir(tableau_donnees,json_file,cols,champs,n_trains):
     tab=pd.DataFrame([])
     tab["numero train"]=0
+    tab["Heure dep"]=0
+    tab["Heure arriv"]=0
     for i in range(len(cols)):
         c=cols[i]
         tab[c]=0
@@ -77,13 +79,15 @@ def remplir(tableau_donnees,json_file,cols,champs,n_trains):
                     except:
                         pass
                 tab.loc[j,"numero train"]=res["results"][n]["segments"][0]["trainNumber"]
+                tab.loc[j,"Heure dep"]=res["results"][n]["departureDate"].split("T")[1]
+                tab.loc[j,"Heure arriv"]=res["results"][n]["arrivalDate"].split("T")[1]
 #                print(" Reussi")
     except:
 #        print(" Rate")
         pass
     nrows=tableau_donnees.shape[0]
-    t=tableau_donnees.loc[range(nrows-n_trains,nrows),["Date rech","numero train"]].copy()
-    t=t.merge(tab,how="left",on="numero train")
+    t=tableau_donnees.loc[range(nrows-n_trains,nrows),["Date rech","numero train","Heure dep","Heure arriv"]].copy()
+    t=t.merge(tab,how="left",on=["numero train","Heure dep","Heure arriv"])
     tableau_donnees.loc[range(nrows-n_trains,nrows),cols+["numero train"]]=t.loc[:,cols+["numero train"]].values
 
 
@@ -161,7 +165,16 @@ for traj in range(dim_trajets):
                 for n in range(nb_trains):
 
                     if len(resultat3["results"][n]["priceProposals"])>0: #Critere pour verifier qu'il s'agit bien d'un train - à remplacer eventuellement
-                        j=j+1
+                        if j==-1:
+                            j=0
+                        elif resultat3["results"][n]["segments"][0]["trainNumber"]!=tableau_result.loc[j,"numero train"]:
+                            j=j+1
+                        elif resultat3["results"][n]["departureDate"].split("T")[1]!=tableau_result.loc[j,"Heure dep"]:
+                            j=j+1
+                        elif resultat3["results"][n]["arrivalDate"].split("T")[1]!=tableau_result.loc[j,"Heure arriv"]:
+                            j=j+1
+                        else:
+                            continue
                         vrai_nb_trains=vrai_nb_trains+1
                         tableau_result.loc[j]=0
                         #On inscrit dans le tableau les parametres d'entree
@@ -173,7 +186,7 @@ for traj in range(dim_trajets):
                         tableau_result.loc[j,"Date dep"]=resultat3["results"][n]["departureDate"].split("T")[0]
                         tableau_result.loc[j,"Heure dep"]=resultat3["results"][n]["departureDate"].split("T")[1]
                         tableau_result.loc[j,"Date arriv"]=resultat3["results"][n]["arrivalDate"].split("T")[0]
-                        tableau_result.loc[j,"Heure arriv"]=resultat3["results"][n]["departureDate"].split("T")[1]
+                        tableau_result.loc[j,"Heure arriv"]=resultat3["results"][n]["arrivalDate"].split("T")[1]
                         #Le type de transport :
                         tableau_result.loc[j,"Type"]=resultat3["results"][n]["segments"][0]["transporter"]
                         nb_correspondances=len(resultat3["results"][n]["segments"])
