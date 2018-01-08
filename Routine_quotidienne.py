@@ -71,11 +71,11 @@ def remplir(tableau_donnees,json_file,cols,champs,n_trains):
             if len(res["results"][n]["priceProposals"])>0: #Critere pour verifier qu'il s'agit bien d'un train - à remplacer eventuellement
                 if j==-1:
                     j=0
-                elif res["results"][n]["segments"][0]["trainNumber"]!=tableau_donnees.loc[j,"numero train"]:
+                elif res["results"][n]["segments"][0]["trainNumber"]!=tab.loc[j,"numero train"]:
                     j=j+1
-                elif res["results"][n]["departureDate"].split("T")[1]!=tableau_donnees.loc[j,"Heure dep"]:
+                elif res["results"][n]["departureDate"].split("T")[1]!=tab.loc[j,"Heure dep"]:
                     j=j+1
-                elif res["results"][n]["arrivalDate"].split("T")[1]!=tableau_donnees.loc[j,"Heure arriv"]:
+                elif res["results"][n]["arrivalDate"].split("T")[1]!=tab.loc[j,"Heure arriv"]:
                     j=j+1
                 else:
                     continue
